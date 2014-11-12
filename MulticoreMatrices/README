@@ -1,0 +1,3 @@
+This is a project for EE 379K - Multicore Computing to build multithreaded matrix algorithms. The project description is:
+
+Implement parallel CPU or GPU based algorithms to solve linear systems, invert matrices, compute determinants, and LU factorizations.
