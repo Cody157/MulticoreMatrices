@@ -1,5 +1,6 @@
 package matrix;
 
+import java.util.ArrayList;
 import java.util.Random;
 
 public class Matrix
@@ -309,6 +310,25 @@ public class Matrix
 	}
 	
 	/**
+	 * Returns the index of the row you should swap with if there is a valid
+	 * row to swap, that is if a row below the current row has a non-zero entry in column col.
+	 * If there is on such row, returns -1.
+	 * @param mat : the Double[][] to search for row for swapping
+	 * @param row : the current row
+	 * @param col : the current column
+	 * @return
+	 */
+	private int determineRowSwap(Double[][] mat, int row, int col)
+	{
+		for (int i = row + 1; i < mat.length; i++)
+		{
+			if (mat[i][col] != 0)
+				return i;
+		}
+		return -1;
+	}
+
+	/**
 	 * Returns the reduced row echelon form of this matrix.
 	 * @return
 	 */
@@ -415,22 +435,17 @@ public class Matrix
 		// and only finding the row echelon form, not reduced row echelon form.
 		for (int i = 0, j = 0; i < row && j < col; i++, j++)
 		{
-			for (; j < col; j++)
+			if (mat[i][j] == 0) // pivot can't be 0
 			{
-				if (mat[i][j] == 0) // pivot can't be 0
-				{
-					int swap = determineRowSwap(mat, i, j);
-					if (swap == -1) // no pivot in this column
-						continue;
-					else
-						det *= rowInterchange(mat, i, swap); // swap with row with pivot in this column
-				}
-				for (int k = i + 1; k < row; k++) // eliminate all other values in this column below this row
-				{
-					det *= rowAdd(mat, k, i, -mat[k][j] / mat[i][j]);
-					mat[k][j] = 0.0; // Ensure it is 0, regardless of rounding error. 
-				}
-				break;
+				int swap = determineRowSwap(mat, i, j);
+				if (swap == -1) // no pivot in this column
+					return 0.0;
+				else
+					det *= rowInterchange(mat, i, swap); // swap with row with pivot in this column
+			}
+			for (int k = i + 1; k < row; k++) // eliminate all other values in this column below this row
+			{
+				det *= rowAdd(mat, k, i, -mat[k][j] / mat[i][j]);
 			}
 		}
 		
@@ -450,22 +465,74 @@ public class Matrix
 	}
 	
 	/**
-	 * Returns the index of the row you should swap with if there is a valid
-	 * row to swap, that is if a row below the current row has a non-zero entry in column col.
-	 * If there is on such row, returns -1.
-	 * @param mat : the Double[][] to search for row for swapping
-	 * @param row : the current row
-	 * @param col : the current column
-	 * @return
+	 * Determines the LU decomposition of a matrix. 
+	 * This is an extended LU decomposition in that it can determine a factorization for any matrix, including
+	 * 	rectangular matrices, singular matrices, and any matrix that requires row swapping when determining its row echelon form.
+	 * There are two extensions that allows this:
+	 * 	1. L need not be lower triangular, it only need be a permutation of a lower triangular matrix.
+	 * 	2. U may have 0 entries on the diagonal.
+	 * Note also that L is a permutation of a *unitary* triangular matrix in this algorithm, so the
+	 * 	decomposition is unique for any matrix that has at least m - 1 pivots, where m is the number of rows in
+	 * 	matrix and the number of pivots is equal to the number of rows in the row echelon form that have non-zero elements.
+	 * 	Notice also that U is a row echelon form of the matrix, so the number of pivots is merely the number of rows in U
+	 * 	that have non-zero elements.
+	 * 
+	 * As a result, this algorithm guarantees the following:
+	 * 	1. L will be a permutation of a lower triangular matrix with 1s along the main diagonal.
+	 * 	2. U will be an upper triangular matrix where the elements on the main diagonal may or may not be 0.
+	 * @return an array of Matrix objects where arr[0] = L and arr[1] = U in the determined LU decomposition.
 	 */
-	private int determineRowSwap(Double[][] mat, int row, int col)
+	public Matrix[] LU()
 	{
-		for (int i = row + 1; i < mat.length; i++)
+		Double[][] L = new Double[row][row];
+		Double[][] U = new Double[row][col];
+		ArrayList<Integer[]> swaps = new ArrayList<Integer[]>();
+		
+		matrixCopy(matrix, U); //init U
+		for (int i = 0; i < row; i++)
 		{
-			if (mat[i][col] != 0)
-				return i;
+			L[i][i] = 1.0;
+			for (int j = i + 1; j < row; j++)
+			{
+				L[i][j] = 0.0;
+			}
 		}
-		return -1;
+		
+		for (int i = 0, j = 0; i < row && j < col; i++, j++)
+		{
+			if (U[i][j] == 0) // pivot can't be 0
+			{
+				int swap = determineRowSwap(U, i, j);
+				if (swap == -1) // no pivot in this column
+				{
+					i--;
+					continue; // Essentially just go to next column in same row and try agian.
+				}
+				else
+				{
+					Integer[] temp = {i, swap};
+					swaps.add(temp);
+					rowInterchange(U, i, swap); // swap with row with pivot in this column
+				}
+			}
+			for (int k = i + 1; k < row; k++) // eliminate all other values in this column below this row
+			{
+				L[k][j] = U[k][j] / U[i][j];
+				rowAdd(U, k, i, -U[k][j] / U[i][j]);
+				U[k][j] = 0.0; // Ensure it is 0, regardless of rounding error.
+			}
+		}
+		
+		for (int i = 0; i < swaps.size(); i++)
+		{
+			Integer[] temp = swaps.get(i);
+			rowInterchange(L, temp[0], temp[1]);
+		}
+		
+		Matrix[] LU = new Matrix[2];
+		LU[0] = new Matrix(L);
+		LU[1] = new Matrix(U);
+		return LU;
 	}
-
+	
 }
