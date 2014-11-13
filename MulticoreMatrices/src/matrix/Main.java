@@ -15,8 +15,8 @@ public class Main
 			for (int j = 0; j < 3; j++)
 			{ 
 				mat[i][j] = (double) i + j;
-				if (i == 0 && j == 2)
-					mat[i][j]++;
+//				if (i == 0 && j == 2)
+//					mat[i][j]++;
 			}
 		}
 		
