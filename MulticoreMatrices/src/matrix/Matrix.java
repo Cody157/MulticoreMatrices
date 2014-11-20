@@ -115,6 +115,11 @@ public class Matrix
 		return col;
 	}
 	
+	public Double get(int i, int j)
+	{
+		return matrix[i][j];
+	}
+	
 	/**
 	 * Creates a matrix with random elements. The caller specifies the number of rows and columns
 	 * for the matrix to have, the minimum and maximum values it can contain, and the decimal precision
@@ -138,6 +143,38 @@ public class Matrix
 		}
 		return mat;
 	}
+	
+	/**
+	 * Creates a matrix with random elements. The caller specifies the number of rows and columns
+	 * for the matrix to have, the minimum and maximum values it can contain, and the decimal precision
+	 * of each of these elements.
+	 * @param numRows the number of rows of the new randomized Matrix
+	 * @param numColumns the number of columns of the new randomized Matrix
+	 * @param min the double minimum value of an element that can be put in the matrix
+	 * @param max the double maximum value of an element that can be put in the matrix
+	 * @return a Matrix object with randomized entries
+	 */
+	public static Matrix randomMatrix(int numRows, int numColumns, double min, double max, int scale)
+	{
+		Matrix mat = new Matrix(numRows, numColumns);
+		Random rand = new Random();
+		int num = 1;
+		for (int i = 0; i < scale; i++)
+		{
+			num *= 10;
+		}
+		for (int i = 0; i < numRows; i++)
+		{
+			for (int j = 0; j < numColumns; j++)
+			{
+				Double val = new Double(rand.nextDouble() * (max - min) + min);
+				val = (double) ((int) (val * num + .5)) / num;;
+				mat.matrix[i][j] = val;
+			}
+		}
+		return mat;
+	}
+
 	
 	/**
 	 * Creates a triangular matrix with random elements. The caller specifies the number of rows and columns
@@ -224,16 +261,7 @@ public class Matrix
 	 */
 	public String toString()
 	{
-		String mat = "";
-		for (int i = 0; i < row; i++)
-		{
-			for (int j = 0; j < col; j++)
-			{
-				mat += matrix[i][j].toString() + "\t";
-			}
-			mat += "\n";
-		}
-		return mat;
+		return toString(10);
 	}
 	
 	/**
@@ -445,7 +473,8 @@ public class Matrix
 			}
 			for (int k = i + 1; k < row; k++) // eliminate all other values in this column below this row
 			{
-				det *= rowAdd(mat, k, i, -mat[k][j] / mat[i][j]);
+				rowAdd(mat, k, i, -mat[k][j] / mat[i][j]);
+				mat[k][j] = 0.0;
 			}
 		}
 		
@@ -616,6 +645,27 @@ public class Matrix
 		LU[0] = new Matrix(L);
 		LU[1] = new Matrix(U);
 		return LU;
+	}
+	
+	public static Matrix multiply(Matrix x, Matrix y)
+	{
+		if (x.col != y.row)
+			return null;
+		Double[][] mat = new Double[x.row][y.col];
+		for (int i = 0; i < x.row; i++)
+		{
+			for (int j = 0;  j < y.col; j++)
+			{
+				Double sum = 0.0;
+				for (int k = 0; k < x.col; k++)
+				{
+					sum += x.matrix[i][k] * y.matrix[k][j];
+				}
+				mat[i][j] = sum;
+			}
+		}
+		return new Matrix(mat);
+		
 	}
 	
 }
